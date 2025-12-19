@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Solo Leveling System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="theme-color" content="#00e5ff">
+
+<!-- FONT -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --neon:#00e5ff;
+  --dark:#010409;
+  --panel:rgba(10,15,20,.92);
+  --success:#2cff8f;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:Orbitron}
+
+body{
+  background:url("https://wallpapercave.com/wp/wp10972088.jpg") center/cover fixed;
+  color:var(--neon);
+  min-height:100vh;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.8);
+  z-index:-1;
+}
+
+header{text-align:center;padding:30px}
+header h1{text-shadow:0 0 20px var(--neon)}
+
+.container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+  width:92%;
+  max-width:1200px;
+  margin:auto;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--neon);
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 0 30px rgba(0,229,255,.2);
+  position:relative;
+}
+
+.exp-bar{
+  height:14px;
+  background:#111;
+  border-radius:10px;
+  overflow:hidden;
+  margin:10px 0;
+}
+.exp-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--success),var(--neon));
+  transition:.4s;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  background:transparent;
+  color:var(--neon);
+  border:1px solid var(--neon);
+  border-radius:8px;
+}
+
+button:hover{background:var(--neon);color:black}
+
+.lock{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.9);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  border-radius:14px;
+  text-align:center;
+  padding:20px;
+}
+
+.price{
+  font-size:1.2rem;
+  margin:10px 0;
+  color:#fff;
+}
+
+footer{text-align:center;color:#aaa;margin:40px 0;font-size:.8rem}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>SOLO LEVELING SYSTEM</h1>
+  <p>Train • Level Up • Become the Shadow Monarch</p>
+</header>
+
+<main class="container">
+
+<!-- STATUS -->
+<section class="panel">
+  <h2>Status</h2>
+  <p id="level">Level: 1</p>
+  <p id="rank">Rank: E</p>
+
+  <div class="exp-bar">
+    <div class="exp-fill" id="expFill"></div>
+  </div>
+  <p id="expText">EXP: 0%</p>
+
+  <button onclick="train()">Train ⚔️</button>
+</section>
+
+<!-- DAILY TASKS -->
+<section class="panel">
+  <h2>Daily Training</h2>
+  <ul id="tasks"></ul>
+</section>
+
+<!-- SUBSCRIPTIONS -->
+<section class="panel">
+  <h2>Unlock System</h2>
+  <p>Choose your path, Hunter.</p>
+
+  <div class="lock" id="lock">
+
+    <div class="price">Bronze – $3 (Basic Unlock)</div>
+    <div id="paypal-bronze"></div>
+
+    <div class="price">Silver – $7 (Advanced System)</div>
+    <div id="paypal-silver"></div>
+
+    <div class="price">Gold – $15 (Shadow Monarch)</div>
+    <div id="paypal-gold"></div>
+
+  </div>
+</section>
+
+</main>
+
+<footer>© 2025 Solo Leveling System</footer>
+
+<!-- PAYPAL SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id=K3Z5WM44HT45U&currency=USD"></script>
+
+<script>
+let level = +localStorage.getItem("level") || 1;
+let exp = +localStorage.getItem("exp") || 0;
+let unlocked = localStorage.getItem("unlock")==="true";
+
+const ranks=["E","D","C","B","A","S","SHADOW MONARCH"];
+const workouts=[
+["100 Push-ups","100 Sit-ups","10 km Run"],
+["150 Squats","50 Pull-ups"],
+["200 Crunches","Jump Rope 500x"],
+["100 Burpees","200 Lunges"],
+["Core Training","Shadow Boxing"],
+["Extreme Training"],
+["Rest & Meditation"]
+];
+
+function rankCalc(){
+  return ranks[Math.min(Math.floor(level/5),ranks.length-1)];
+}
+
+function train(){
+  exp+=20;
+  if(exp>=100){
+    exp=0;
+    level++;
+  }
+  save(); update();
+}
+
+function update(){
+  document.getElementById("level").innerText=`Level: ${level}`;
+  document.getElementById("rank").innerText=`Rank: ${rankCalc()}`;
+  document.getElementById("expText").innerText=`EXP: ${exp}%`;
+  document.getElementById("expFill").style.width=exp+"%";
+  if(unlocked) document.getElementById("lock").style.display="none";
+}
+
+function save(){
+  localStorage.setItem("level",level);
+  localStorage.setItem("exp",exp);
+}
+
+function unlockSystem(){
+  localStorage.setItem("unlock","true");
+  alert("SYSTEM UNLOCKED ⚡");
+  location.reload();
+}
+
+/* PAYPAL BUTTONS */
+function paypalButton(id, amount){
+  paypal.Buttons({
+    createOrder:(d,a)=>a.order.create({
+      purchase_units:[{amount:{value:amount}}]
+    }),
+    onApprove:(d,a)=>a.order.capture().then(unlockSystem)
+  }).render(id);
+}
+
+paypalButton('#paypal-bronze','3.00');
+paypalButton('#paypal-silver','7.00');
+paypalButton('#paypal-gold','15.00');
+
+document.getElementById("tasks").innerHTML =
+workouts[new Date().getDay()%7].map(t=>`<li>☑️ ${t}</li>`).join("");
+
+update();
+</script>
+
+</body>
+</html>
